@@ -1,5 +1,7 @@
 # CognOS Graph MCP Server — Setup
 
+![Conductor-Graph-MCP](logo.png)
+
 Fristående MCP-server som exponerar hela CognOS-armadan som en
 maskinläsbar graf. Conductor (Claude76) anropar ett verktyg och
 får hela systembilden direkt.
