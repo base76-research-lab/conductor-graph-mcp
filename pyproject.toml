@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "conductor-graph-mcp"
+version = "0.1.0"
+description = "MCP server that exposes a CognOS agent system as a machine-readable graph"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+keywords = ["mcp", "ai-agents", "cognos", "graph", "llm", "fnc"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "mcp>=1.0",
+  "httpx>=0.27",
+  "psutil>=5.9",
+]
+
+[project.urls]
+Homepage = "https://github.com/base76-research-lab/conductor-graph-mcp"
+Repository = "https://github.com/base76-research-lab/conductor-graph-mcp"
+
+[project.scripts]
+conductor-graph-mcp = "conductor_graph_mcp:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["conductor_graph_mcp"]
