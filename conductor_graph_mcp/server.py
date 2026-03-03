@@ -34,6 +34,11 @@ BUS_LOG       = Path("/tmp/b76_armada_bus.log")
 COMPRESS_LOG  = Path("/tmp/b76_compressed_prompt.txt")  # output-filen
 COMPRESS_STAT = Path("/tmp/b76_compress.log")
 
+IIC_ROOT      = Path("/media/bjorn/iic/workspace/Base76_Research_Lab/operations/COCKPIT")
+SESSION_MD    = IIC_ROOT / "SESSION.md"
+BOARD_MD      = IIC_ROOT / "BOARD.md"
+ENERGY_MD     = IIC_ROOT / "energy_state.md"
+
 DB_PATH = Path.home() / ".local/share/b76/sessions/traces.sqlite3"
 
 AGENT_SCRIPTS = {
@@ -449,6 +454,63 @@ GET_EDGES_TOOL = Tool(
     inputSchema={"type": "object", "properties": {}},
 )
 
+def _parse_cockpit() -> dict:
+    """Läser SESSION.md, BOARD.md och energy_state.md och returnerar komprimerad cockpit-kontext."""
+    result = {}
+
+    # --- energy_state.md: plocka ut kapacitet ---
+    if ENERGY_MD.exists():
+        text = ENERGY_MD.read_text()
+        for line in text.splitlines():
+            if line.startswith("**Capacity:**"):
+                result["energy"] = line.replace("**Capacity:**", "").strip()
+                break
+
+    # --- SESSION.md: aktivt fokus ---
+    if SESSION_MD.exists():
+        text = SESSION_MD.read_text()
+        focus_lines = []
+        in_focus = False
+        for line in text.splitlines():
+            if line.startswith("## AKTIVT FOKUS"):
+                in_focus = True
+                continue
+            if in_focus:
+                if line.startswith("## "):
+                    break
+                if line.strip():
+                    focus_lines.append(line.strip())
+        result["active_focus"] = " ".join(focus_lines[:3])
+
+    # --- BOARD.md: active-uppgifter ---
+    if BOARD_MD.exists():
+        text = BOARD_MD.read_text()
+        active_items = []
+        in_active = False
+        for line in text.splitlines():
+            if line.startswith("## 🔵 ACTIVE"):
+                in_active = True
+                continue
+            if in_active:
+                if line.startswith("## "):
+                    break
+                if line.startswith("- [ ]") or line.startswith("- [x]"):
+                    active_items.append(line.strip())
+        result["active_tasks"] = active_items[:5]
+
+    return result
+
+
+GET_COCKPIT_CONTEXT_TOOL = Tool(
+    name="get_cockpit_context",
+    description=(
+        "Returns the current Cockpit context: active focus (from SESSION.md), "
+        "active tasks (from BOARD.md), and energy level (from energy_state.md). "
+        "Call this at session start to orient immediately without reading files manually."
+    ),
+    inputSchema={"type": "object", "properties": {}},
+)
+
 GET_BLOCKED_NODES_TOOL = Tool(
     name="get_blocked_nodes",
     description=(
@@ -466,6 +528,7 @@ async def list_tools() -> list[Tool]:
         GET_NODE_STATUS_TOOL,
         GET_EDGES_TOOL,
         GET_BLOCKED_NODES_TOOL,
+        GET_COCKPIT_CONTEXT_TOOL,
     ]
 
 
@@ -534,6 +597,13 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> CallToolResult:
                     indent=2,
                 ),
             )],
+            is_error=False,
+        )
+
+    elif name == "get_cockpit_context":
+        ctx = _parse_cockpit()
+        return CallToolResult(
+            content=[TextContent(type="text", text=json.dumps(ctx, indent=2, ensure_ascii=False))],
             is_error=False,
         )
 
