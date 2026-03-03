@@ -19,7 +19,7 @@ from typing import Any, Optional
 
 import httpx
 from mcp.server import Server
-from mcp.types import Tool, TextContent, ToolResult
+from mcp.types import Tool, TextContent, CallToolResult
 
 # ============================================================================
 # Konfiguration
@@ -470,7 +470,7 @@ async def list_tools() -> list[Tool]:
 
 
 @server.call_tool()
-async def call_tool(name: str, arguments: dict[str, Any]) -> ToolResult:
+async def call_tool(name: str, arguments: dict[str, Any]) -> CallToolResult:
 
     if name == "get_agent_graph":
         snapshot = await _build_graph()
@@ -480,7 +480,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> ToolResult:
             "edges":     [_edge_dict(e) for e in snapshot.edges],
             "summary":   snapshot.summary,
         }
-        return ToolResult(
+        return CallToolResult(
             content=[TextContent(type="text", text=json.dumps(result, indent=2))],
             is_error=False,
         )
@@ -490,12 +490,12 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> ToolResult:
         snapshot = await _build_graph()
         found    = next((n for n in snapshot.nodes if n.id == node_id), None)
         if found:
-            return ToolResult(
+            return CallToolResult(
                 content=[TextContent(type="text", text=json.dumps(_node_dict(found), indent=2))],
                 is_error=False,
             )
         known = [n.id for n in snapshot.nodes]
-        return ToolResult(
+        return CallToolResult(
             content=[TextContent(
                 type="text",
                 text=json.dumps({"error": f"Nod '{node_id}' hittades inte.", "known_nodes": known}),
@@ -505,7 +505,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> ToolResult:
 
     elif name == "get_edges":
         snapshot = await _build_graph()
-        return ToolResult(
+        return CallToolResult(
             content=[TextContent(
                 type="text",
                 text=json.dumps(
@@ -520,7 +520,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> ToolResult:
     elif name == "get_blocked_nodes":
         snapshot = await _build_graph()
         blocked  = [n for n in snapshot.nodes if n.status in ("blocked", "error")]
-        return ToolResult(
+        return CallToolResult(
             content=[TextContent(
                 type="text",
                 text=json.dumps(
@@ -537,19 +537,16 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> ToolResult:
             is_error=False,
         )
 
-    return ToolResult(
+    return CallToolResult(
         content=[TextContent(type="text", text=f"Okänt verktyg: {name}")],
         is_error=True,
     )
 
 
 async def main():
-    print("🕸  CognOS Graph MCP Server starting...")
-    print(f"   Gateway: {COGNOS_BASE_URL}")
-    print("   Tools: get_agent_graph, get_node_status, get_edges, get_blocked_nodes")
-
-    async with server:
-        await server.wait()
+    from mcp.server.stdio import stdio_server
+    async with stdio_server() as (read_stream, write_stream):
+        await server.run(read_stream, write_stream, server.create_initialization_options())
 
 
 if __name__ == "__main__":
