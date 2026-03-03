@@ -1,0 +1,36 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.base76-research-lab/conductor-graph-mcp",
+  "description": "Exposes a CognOS agent system as a machine-readable graph. Full system snapshot with one tool call.",
+  "repository": {
+    "url": "https://github.com/base76-research-lab/conductor-graph-mcp",
+    "source": "github"
+  },
+  "version": "0.1.1",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "conductor-graph-mcp",
+      "version": "0.1.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "COGNOS_BASE_URL",
+          "description": "URL of the TrustPlane/CognOS gateway (default: http://127.0.0.1:8788)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "COGNOS_API_KEY",
+          "description": "API key for the CognOS gateway (optional, leave empty if not required)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}

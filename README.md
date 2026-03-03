@@ -1,5 +1,7 @@
 # Conductor Graph MCP Server
 
+mcp-name: io.github.base76-research-lab/conductor-graph-mcp
+
 ![Conductor-Graph-MCP](logo.png)
 
 An MCP server that exposes a CognOS agent system as a machine-readable JSON graph. The conductor (Claude) calls a single tool and gets an immediate full system snapshot.
